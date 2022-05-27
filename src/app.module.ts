@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose'
 
 import { AppController } from './app.controller';
@@ -7,11 +8,19 @@ import { WishlistsModule } from './wishlists/wishlists.module';
 
 @Module({
   imports: [
-    WishlistsModule, 
-    MongooseModule.forRoot(
-      'mongodb+srv://root-admin:4bxzoFQRtwyHh2uh@assignment.wbf9t.mongodb.net/?retryWrites=true&w=majority')
-    ],
+    WishlistsModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get('MONGODB_URI')
+      }),
+      inject: [ConfigService]
+    })
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
