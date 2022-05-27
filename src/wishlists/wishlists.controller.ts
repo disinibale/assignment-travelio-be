@@ -7,21 +7,25 @@ export class WishlistsController {
     constructor(private readonly wishlistService: WishlistsService) { }
 
     @Post()
-    addProduct(
+    async addProduct(
         @Body('title') title: string,
         @Body('description') description: string
     ) {
+        const data = await this.wishlistService.insertWishlist(title, description)
+
         return {
             'statusCode': '200',
-            'data': this.wishlistService.insertWishlist(title, description)
+            'data': data
         }
     }
 
     @Get()
-    getAll() {
+    async getAll() {
+        const data = await this.wishlistService.getWishlists()
+
         return {
             'statusCode': '200',
-            'data': this.wishlistService.getWishlists()
+            'data': data
         }
     }
 
@@ -31,18 +35,18 @@ export class WishlistsController {
     }
 
     @Patch(':id')
-    updateWishlist(
+    async updateWishlist(
         @Param('id') id: string,
         @Body('title') title: string,
         @Body('description') description: string
     ) {
-        this.wishlistService.update(id, title, description)
+        await this.wishlistService.update(id, title, description)
         return null
     }
 
     @Delete(':id')
-    removeWishlist(@Param('id') id: string) {
-        this.wishlistService.delete(id)
+    async removeWishlist(@Param('id') id: string) {
+        await this.wishlistService.delete(id)        
         return null
     }
 

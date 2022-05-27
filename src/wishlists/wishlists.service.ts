@@ -1,34 +1,45 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+
 import { Wishlists } from './wishlists.model';
 
 @Injectable()
 export class WishlistsService {
     private wishlist: Wishlists[] = []
 
-    insertWishlist(title: string, description: string) {
-        const id = Math.random().toString()
-        const newWishlist = new Wishlists(id, title, description)
-        this.wishlist.push(newWishlist)
+    constructor(@InjectModel('Wishlist') private readonly wishlistModel: Model<Wishlists>,) { }
 
-        if (!this.wishlist) throw new NotFoundException('Anda belum memiliki wishlist')
+    async insertWishlist(title: string, description: string) {
+        const newWishlist = new this.wishlistModel({
+            title, description
+        })
 
-        return newWishlist
-    }
-    
-    getWishlists() {
-        return [...this.wishlist]
+        const result = await newWishlist.save()
+        return result as object
     }
 
-    getById(id: string) {
-        const wishlist = this.findWishlist(id)[0]
-
-        return {...wishlist}
+    async getWishlists() {
+        const wishlists = await this.wishlistModel.find().exec()
+        return wishlists.map((wish) => ({
+            id: wish.id,
+            title: wish.title,
+            description: wish.description
+        }))
     }
 
-    update(id: string, title: string, description: string) {
-        const [wishlist, index] = this.findWishlist(id)
-        const updatedWishlist = { ...wishlist }
+    async getById(id: string) {
+        const wishlist = await this.findWishlist(id)
 
+        return {
+            id: wishlist.id,
+            title: wishlist.title,
+            description: wishlist.description
+        }
+    }
+
+    async update(id: string, title: string, description: string) {
+        const updatedWishlist = await this.findWishlist(id)
         if (title) {
             updatedWishlist.title = title
         }
@@ -36,21 +47,29 @@ export class WishlistsService {
             updatedWishlist.description = description
         }
 
-        this.wishlist[index] = updatedWishlist
+        updatedWishlist.save()
     }
 
-    delete(id: string) {
-        const index = this.findWishlist(id)[1]
-        this.wishlist.splice(index, 1)        
+    async delete(id: string) {
+        const result = await this.wishlistModel.deleteOne({_id: id}).exec()
+        if (result.deletedCount === 0) {
+            throw new NotFoundException('Data tidak ditemukan')
+        }
     }
 
-    private findWishlist(id: string): [Wishlists, number] {
-        const wishlistIndex = this.wishlist.findIndex((wish) => wish.id === id)
-        const wishlist = this.wishlist[wishlistIndex]
+    private async findWishlist(id: string): Promise<Wishlists> {
+        let wishlist
+        try {
+            wishlist = await this.wishlistModel.findById(id).exec()
+        } catch (e) {
+            throw new NotFoundException('Data tidak ditemukan')
+        }
 
-        if (!wishlist) throw new NotFoundException('Wishlist tidak ditemukan')
-    
-        return [wishlist, wishlistIndex]
+        if (!wishlist) {
+            throw new NotFoundException('Data tidak ditemukan')
+        }
+
+        return wishlist
     }
 
 }
