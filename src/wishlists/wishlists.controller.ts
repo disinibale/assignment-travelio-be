@@ -8,10 +8,13 @@ export class WishlistsController {
 
     @Post()
     async addProduct(
+        @Body('uid') uid: string,
         @Body('title') title: string,
-        @Body('description') description: string
+        @Body('rating') rating: number,
+        @Body('authors') authors: string,
+        @Body('thumbnail') thumbnail: string
     ) {
-        const data = await this.wishlistService.insertWishlist(title, description)
+        const data = await this.wishlistService.insertWishlist(uid, title, rating, authors, thumbnail)
 
         return {
             'statusCode': '200',
@@ -37,10 +40,12 @@ export class WishlistsController {
     @Patch(':id')
     async updateWishlist(
         @Param('id') id: string,
-        @Body('title') title: string,
-        @Body('description') description: string
+        @Body('title') title: string,        
+        @Body('rating') rating: number,
+        @Body('authors') authors: string,
+        @Body('thumbnail') thumbnail: string,
     ) {
-        await this.wishlistService.update(id, title, description)
+        await this.wishlistService.update(id, title, rating, authors, thumbnail)
         return null
     }
 

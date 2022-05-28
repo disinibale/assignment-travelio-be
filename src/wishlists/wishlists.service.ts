@@ -10,9 +10,15 @@ export class WishlistsService {
 
     constructor(@InjectModel('Wishlist') private readonly wishlistModel: Model<Wishlists>,) { }
 
-    async insertWishlist(title: string, description: string) {
+    async insertWishlist(
+        uid: string,
+        title: string,
+        rating: number,
+        authors: string,
+        thumbnail: string,
+    ) {
         const newWishlist = new this.wishlistModel({
-            title, description
+            uid, title, rating, authors, thumbnail
         })
 
         const result = await newWishlist.save()
@@ -24,34 +30,39 @@ export class WishlistsService {
         return wishlists.map((wish) => ({
             id: wish.id,
             title: wish.title,
-            description: wish.description
+            uid: wish.uid,
+            rating: wish.rating,
+            authors: wish.authors,
+            thumbnail: wish.thumbnail
         }))
     }
 
     async getById(id: string) {
         const wishlist = await this.findWishlist(id)
 
-        return {
-            id: wishlist.id,
-            title: wishlist.title,
-            description: wishlist.description
-        }
+        return wishlist
     }
 
-    async update(id: string, title: string, description: string) {
+    async update(id: string, title: string, rating: number, authors: string, thumbnail: string) {
         const updatedWishlist = await this.findWishlist(id)
         if (title) {
             updatedWishlist.title = title
         }
-        if (description) {
-            updatedWishlist.description = description
+        if (rating) {
+            updatedWishlist.rating = rating
+        }
+        if (authors) {
+            updatedWishlist.authors = authors
+        }
+        if (thumbnail) {
+            updatedWishlist.thumbnail = thumbnail
         }
 
         updatedWishlist.save()
     }
 
     async delete(id: string) {
-        const result = await this.wishlistModel.deleteOne({_id: id}).exec()
+        const result = await this.wishlistModel.deleteOne({ _id: id }).exec()
         if (result.deletedCount === 0) {
             throw new NotFoundException('Data tidak ditemukan')
         }
